@@ -46,13 +46,18 @@ module Rake
 
       attr_reader :tag
 
-      def initialize(tag)
+      def initialize(tag, omissions=[])
         @tag = tag
+        @omissions = omissions.map(&:to_s)
       end
 
       # Returns a hash that maps filenames to arrays with their annotations.
       def find
         find_in('.')
+      end
+
+      def omissions
+        @omissions_matcher ||= @omissions.join '|'
       end
 
       # Returns a hash that maps filenames under +dir+ (recursively) to arrays
@@ -64,18 +69,22 @@ module Rake
         Dir.glob("#{dir}/*") do |item|
           next if File.basename(item)[0] == ?.
 
-          if File.directory?(item)
-            results.update(find_in(item))
-          elsif item =~ /\.(builder|rb|coffee|rake|pp|ya?ml|gemspec)$/ || RUBYFILES.include?(File.basename(item))
-            results.update(extract_annotations_from(item, /#\s*(#{tag}):?\s*(.*)$/))
-          elsif item =~ /\.(css|scss|js)$/
-            results.update(extract_annotations_from(item, /\/\/\s*(#{tag}):?\s*(.*)$/))
-          elsif item =~ /\.erb$/
-            results.update(extract_annotations_from(item, /<%\s*#\s*(#{tag}):?\s*(.*?)\s*%>/))
-          elsif item =~ /\.haml$/
-            results.update(extract_annotations_from(item, /-\s*#\s*(#{tag}):?\s*(.*)$/))
-          elsif item =~ /\.slim$/
-            results.update(extract_annotations_from(item, /\/\s*\s*(#{tag}):?\s*(.*)$/))
+
+          unless item =~ /#{omissions}/o
+            case true
+            when File.directory?(item)
+              results.update(find_in(item))
+            when item =~ /\.(builder|rb|coffee|rake|pp|ya?ml|gemspec)$/ || RUBYFILES.include?(File.basename(item))
+              results.update(extract_annotations_from(item, /#\s*(#{tag}):?\s*(.*)$/))
+            when item =~ /\.(css|scss|js)$/
+              results.update(extract_annotations_from(item, /\/\/\s*(#{tag}):?\s*(.*)$/))
+            when item =~ /\.erb$/
+              results.update(extract_annotations_from(item, /<%\s*#\s*(#{tag}):?\s*(.*?)\s*%>/))
+            when item =~ /\.haml$/
+              results.update(extract_annotations_from(item, /-\s*#\s*(#{tag}):?\s*(.*)$/))
+            when item =~ /\.slim$/
+              results.update(extract_annotations_from(item, /\/\s*\s*(#{tag}):?\s*(.*)$/))
+            end
           end
         end
 
