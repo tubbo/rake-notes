@@ -15,6 +15,22 @@ describe Rake::Notes::SourceAnnotationExtractor do
     Dir.chdir(@current_path)
   end
 
+  context "omitting a certain directory of files" do
+    subject do
+      subj = StringIO.new
+      omits = %w(index.html.erb)
+      described_class.enumerate('TODO', out: subj, omissions: omits)
+
+      subj.string
+    end
+
+    before do
+      fixture_file "index.html.erb", "<% # TODO: note in erb %>"
+    end
+
+    it { should_not match(/note in erb/) }
+  end
+
   context 'extracting notes based on file type' do
     subject do
       subj = StringIO.new
@@ -22,7 +38,7 @@ describe Rake::Notes::SourceAnnotationExtractor do
       subj.string
     end
 
-    before(:all) do
+    before do
       fixture_file "index.html.erb", "<% # TODO: note in erb %>"
       fixture_file "index.html.haml", "- # TODO: note in haml"
       fixture_file "index.html.slim", "/ TODO: note in slim"

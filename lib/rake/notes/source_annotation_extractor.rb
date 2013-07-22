@@ -41,15 +41,18 @@ module Rake
       # This class method is the single entry point for the rake tasks.
       def self.enumerate(tag, options={})
         extractor = new(tag, options[:omissions])
-        #require 'debug';debugger
         extractor.display(extractor.find, options)
       end
 
       attr_reader :tag
 
-      def initialize(tag, omissions=[])
+      def initialize(tag, omissions=nil)
         @tag = tag
-        @omissions = omissions.map(&:to_s)
+        @omissions = if omissions.nil?
+          []
+        else
+          omissions.map(&:to_s)
+        end
       end
 
       # Returns a hash that maps filenames to arrays with their annotations.
