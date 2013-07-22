@@ -11,7 +11,7 @@ module Rake
       def initialize(*args)
         yield self if block_given?
 
-        options = args || {}
+        options = args.first || {}
 
         desc "Enumerate all annotations (use notes:optimize, :fixme, :todo for focus)"
         task :notes do
